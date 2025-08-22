@@ -1,0 +1,14 @@
+# Visual Studio junk
+.vs/
+*.user
+*.suo
+
+# Build results
+bin/
+obj/
+Debug/
+Release/
+
+# Other
+*.cache
+*.log
