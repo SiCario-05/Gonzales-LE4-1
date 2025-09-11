@@ -1,58 +1,61 @@
 ﻿using BlogDataLibrary.Database;
-using System;
+using BlogDataLibrary.Models;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BlogDataLibrary.Data
 {
-    public class SqlData
+    public class SqlData : ISqlData
     {
         private readonly ISqlDataAccess _db;
-        private readonly string _connectionStringName = "Default";
+        private const string connectionStringName = "SqlDb";
 
         public SqlData(ISqlDataAccess db)
         {
             _db = db;
         }
 
-        // ===== Users =====
-        public void InsertUser(string username, string firstName, string lastName, string password)
+        public UserModel Authenticate(string username, string password)
         {
-            string sql = "INSERT INTO dbo.Users (UserName, FirstName, LastName, Password) " +
-                         "VALUES (@UserName, @FirstName, @LastName, @Password)";
-            _db.SaveData(sql, new { UserName = username, FirstName = firstName, LastName = lastName, Password = password }, _connectionStringName);
+            return _db.LoadData<UserModel, dynamic>("dbo.spUsers_Authenticate",
+                                                    new { username, password },
+                                                    connectionStringName,
+                                                    isStoredProcedure: true)
+                                                    .FirstOrDefault();
         }
 
-        public IEnumerable<dynamic> GetAllUsers()
+        public void Register(string username, string firstName, string lastName, string password)
         {
-            string sql = "SELECT Id, UserName, FirstName, LastName FROM dbo.Users";
-            return _db.LoadData<dynamic, dynamic>(sql, new { }, _connectionStringName);
+            _db.SaveData("dbo.spUsers_Register",
+                         new { username, firstName, lastName, password },
+                         connectionStringName,
+                         isStoredProcedure: true);
         }
 
-        // ===== Posts =====
-        public void InsertPost(int userId, string title, string body, DateTime dateCreated)
+        public void AddPost(PostModel post)
         {
-            string sql = "INSERT INTO dbo.Posts (UserId, Title, Body, DateCreated) " +
-                         "VALUES (@UserId, @Title, @Body, @DateCreated)";
-            _db.SaveData(sql, new { UserId = userId, Title = title, Body = body, DateCreated = dateCreated }, _connectionStringName);
+            _db.SaveData("dbo.spPosts_Insert",
+                         new { post.UserId, post.Title, post.Body, post.DateCreated },
+                         connectionStringName,
+                         isStoredProcedure: true);
         }
 
-        public IEnumerable<ListPostModel> GetAllPosts()
+        public List<ListPostModel> ListPosts()
         {
-            string sql = "SELECT p.Id, p.Title, u.UserName, p.DateCreated " +
-                         "FROM dbo.Posts p INNER JOIN dbo.Users u ON p.UserId = u.Id";
-            return _db.LoadData<ListPostModel, dynamic>(sql, new { }, _connectionStringName);
+            return _db.LoadData<ListPostModel, dynamic>("dbo.spPosts_List",
+                                                        new { },
+                                                        connectionStringName,
+                                                        isStoredProcedure: true)
+                                                        .ToList();
         }
 
-        public ListPostModel GetPostById(int postId)
+        public ListPostModel ShowPostDetails(int id)
         {
-            string sql = "SELECT p.Id, p.Title, u.UserName, p.DateCreated " +
-                         "FROM dbo.Posts p INNER JOIN dbo.Users u ON p.UserId = u.Id " +
-                         "WHERE p.Id = @Id";
-            var result = _db.LoadData<ListPostModel, dynamic>(sql, new { Id = postId }, _connectionStringName);
-            return result != null ? System.Linq.Enumerable.FirstOrDefault(result) : null;
+            return _db.LoadData<ListPostModel, dynamic>("dbo.spPosts_Details",
+                                                        new { id },
+                                                        connectionStringName,
+                                                        isStoredProcedure: true)
+                                                        .FirstOrDefault();
         }
     }
 }

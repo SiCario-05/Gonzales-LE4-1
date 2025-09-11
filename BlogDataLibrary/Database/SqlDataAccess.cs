@@ -1,13 +1,8 @@
-﻿using System;
+﻿using Dapper;
+using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using Dapper;
-using Microsoft.Extensions.Configuration;
 
 namespace BlogDataLibrary.Database
 {
@@ -20,25 +15,23 @@ namespace BlogDataLibrary.Database
             _config = config;
         }
 
-        // query data (SELECT)
-        public IEnumerable<T> LoadData<T, U>(
-            string sql, U parameters, string connectionStringName)
+        public IEnumerable<T> LoadData<T, U>(string sql, U parameters, string connectionStringName, bool isStoredProcedure = false)
         {
-            using (IDbConnection connection =
-                new SqlConnection(_config.GetConnectionString(connectionStringName)))
+            string connectionString = _config.GetConnectionString(connectionStringName);
+            using (IDbConnection connection = new SqlConnection(connectionString))
             {
-                return connection.Query<T>(sql, parameters);
+                return connection.Query<T>(sql, parameters,
+                    commandType: isStoredProcedure ? CommandType.StoredProcedure : CommandType.Text);
             }
         }
 
-        // save data (INSERT, UPDATE, DELETE)
-        public void SaveData<T>(
-            string sql, T parameters, string connectionStringName)
+        public void SaveData<T>(string sql, T parameters, string connectionStringName, bool isStoredProcedure = false)
         {
-            using (IDbConnection connection =
-                new SqlConnection(_config.GetConnectionString(connectionStringName)))
+            string connectionString = _config.GetConnectionString(connectionStringName);
+            using (IDbConnection connection = new SqlConnection(connectionString))
             {
-                connection.Execute(sql, parameters);
+                connection.Execute(sql, parameters,
+                    commandType: isStoredProcedure ? CommandType.StoredProcedure : CommandType.Text);
             }
         }
     }
