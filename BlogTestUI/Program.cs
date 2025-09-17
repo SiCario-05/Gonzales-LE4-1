@@ -146,7 +146,7 @@ namespace BlogTestUI
         {
             SqlData db = GetConnection();
 
-            // Uncomment ONE function at a time to test it.
+           
 
              Register(db);
              Authenticate(db);

@@ -1,4 +1,5 @@
-﻿using Dapper;
+﻿using Microsoft.Data.SqlClient;
+using Dapper;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Data;
@@ -18,7 +19,7 @@ namespace BlogDataLibrary.Database
         public IEnumerable<T> LoadData<T, U>(string sql, U parameters, string connectionStringName, bool isStoredProcedure = false)
         {
             string connectionString = _config.GetConnectionString(connectionStringName);
-            using (IDbConnection connection = new SqlConnection(connectionString))
+            using (IDbConnection connection = new System.Data.SqlClient.SqlConnection(connectionString))
             {
                 return connection.Query<T>(sql, parameters,
                     commandType: isStoredProcedure ? CommandType.StoredProcedure : CommandType.Text);
@@ -28,7 +29,7 @@ namespace BlogDataLibrary.Database
         public void SaveData<T>(string sql, T parameters, string connectionStringName, bool isStoredProcedure = false)
         {
             string connectionString = _config.GetConnectionString(connectionStringName);
-            using (IDbConnection connection = new SqlConnection(connectionString))
+            using (IDbConnection connection = new System.Data.SqlClient.SqlConnection(connectionString))
             {
                 connection.Execute(sql, parameters,
                     commandType: isStoredProcedure ? CommandType.StoredProcedure : CommandType.Text);
